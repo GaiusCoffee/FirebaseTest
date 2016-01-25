@@ -7,16 +7,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.client.AuthData;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-
-import java.util.Map;
+import java.util.HashMap;
 
 import coffee.gaius.app;
+import coffee.gaius.dbAsync;
+import coffee.gaius.dbCommands;
+import coffee.gaius.dbRequest;
+import coffee.gaius.dbResponse;
 
 public class LoginActivity extends ActionBarActivity {
 
@@ -32,22 +31,25 @@ public class LoginActivity extends ActionBarActivity {
         loginBtnSubmit.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String username = loginTxtUsername.getText().toString();
-                String password = loginTxtPassword.getText().toString();
-
-                ((app)LoginActivity.this.getApplication()).getDb().auth(username, password,
-                        new Firebase.AuthResultHandler() {
-                            @Override
-                            public void onAuthenticated(AuthData authData) {
-                                Toast.makeText(getApplicationContext(), "User ID: " + authData.getUid() +
-                                        ", Provider: " + authData.getProvider(), Toast.LENGTH_SHORT).show();
-                            }
-                            @Override
-                            public void onAuthenticationError(FirebaseError firebaseError) {
-                                Toast.makeText(getApplicationContext(), "Error: " +
-                                        firebaseError.getMessage(), Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                HashMap<String, String> parameters = new HashMap<String, String>();
+                parameters.put("username", loginTxtUsername.getText().toString());
+                parameters.put("password", loginTxtPassword.getText().toString());
+                new dbAsync(){
+                    @Override
+                    protected void onPostExecute(dbResponse result) {
+                        if (result.hasFailed()) {
+                            Toast.makeText(getApplicationContext(),
+                                    "Error: " +  result.getParams().get("error"),
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(getApplicationContext(),
+                                    "User ID: " +  result.getParams().get("uid") +
+                                    ", Provider: " + result.getParams().get("provider"),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }.execute(new dbRequest((app)LoginActivity.this.getApplication(),
+                        dbCommands.userAuth, parameters));
             }
         });
 
@@ -55,22 +57,24 @@ public class LoginActivity extends ActionBarActivity {
         loginBtnRegister.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String username = loginTxtUsername.getText().toString();
-                String password = loginTxtPassword.getText().toString();
-
-                ((app)LoginActivity.this.getApplication()).getDb().register(username, password,
-                        new Firebase.ValueResultHandler<Map<String, Object>>() {
-                            @Override
-                            public void onSuccess(Map<String, Object> result) {
-                                Toast.makeText(getApplicationContext(), "User ID: " +
-                                        result.get("uid"), Toast.LENGTH_SHORT).show();
-                            }
-                            @Override
-                            public void onError(FirebaseError firebaseError) {
-                                Toast.makeText(getApplicationContext(), "Error: " +
-                                        firebaseError.getMessage(), Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                HashMap<String, String> parameters = new HashMap<String, String>();
+                parameters.put("username", loginTxtUsername.getText().toString());
+                parameters.put("password", loginTxtPassword.getText().toString());
+                new dbAsync(){
+                    @Override
+                    protected void onPostExecute(dbResponse result) {
+                        if (result.hasFailed()) {
+                            Toast.makeText(getApplicationContext(),
+                                    "Error: " +  result.getParams().get("error"),
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(getApplicationContext(),
+                                    "User ID: " +  result.getParams().get("uid"),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }.execute(new dbRequest((app)LoginActivity.this.getApplication(),
+                        dbCommands.userRegister, parameters));
             }
         });
 
